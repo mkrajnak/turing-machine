@@ -1,15 +1,9 @@
 /** non deterministic Turing machine simulation, project for FLP course at FIT BUT
  Martin Krajnak, xkrajn02@stud.fit.vurbr.cz
 */
-% :- initialization(main, main.
-
-increment(X,Y) :- Y is X+1.
 
 first([],_).
 first([X|_],Y) :- Y = X.
-
-empty([]) :- true.
-empty([_|_]) :- false.
 
 isLastElem([X|[]],E) :- E == X, !.
 isLastElem([_|T],E) :- isLastElem(T,E).
@@ -27,22 +21,35 @@ main(Argv) :-
   split_lines(LL, S),
   getTape(S, Tape),
   delete(S,Tape,Rules),
-  first(Tape, NTape),
+  addTapeBound(Tape, NTape),
   addRules(Rules),
-  %check_rule(),
-  % rule([[S],[A],[_],[_]]),
-  writeln("====RULEZ====="),
-  forall(rule(R),writeln(R)),
-  writeln("====RULEZ====="),
-  write("TAPE: "), writeln(NTape),
-  makeTransitions('S', NTape, 0, Result),
-  writeln(Result),
+  % forall(rule(R),writeln(R)),
+  makeTransitions('S', NTape, 2, Result),
+  printResults(Result),
   halt.
+
+printResult([]).
+printResult([H|T]) :-
+  H == '<', printResult(T), !;
+  T == ['>'], !;
+  write(H),
+  printResult(T).
+
+
+printResults([]).
+printResults([H|T]) :-
+  printResult(H),
+  writeln(""),
+  printResults(T).
+
+addTapeBound([H|_], NTape) :-
+  append(['<'],H,X),
+  append(X,['>'],NTape).
 
 
 insertStateToTape(_, [], _, _) :- !.
 insertStateToTape(State, [H|T], Pos, Res) :-
-  Pos == 0, append([State], [H|T], Res), !;
+  Pos == 1, append([State], [H|T], Res), !;
   NPos is Pos-1,
   insertStateToTape(State, T, NPos, NewTape),
   Res=[H|NewTape].
@@ -50,23 +57,10 @@ insertStateToTape(State, [H|T], Pos, Res) :-
 
 writeToPos(_, _, [], _).
 writeToPos(Symbol, Pos, [S|T], Res) :-
-  Pos == 0, Res=[Symbol|T], !;
+  Pos == 1, Res=[Symbol|T], !;
   NPos is Pos-1,
   writeToPos(Symbol, NPos, T, NewTape), Res=[S|NewTape].
 
-% TODO abnormal
-% shiftRight(_, [], _).
-% shiftRight(Pos, [S,SS|T], Res) :-
-%   Pos == 0, Res=[SS,S|T],!;
-%   NPos is Pos-1,
-%   shiftRight(NPos, [SS|T], NewTape), Res=[S|NewTape].
-%
-%   % TODO abnormal
-% shiftLeft(_, [], _).
-% shiftLeft(Pos, [S,SS|T], Res) :-
-%   Pos == 0, Res=[SS,S|T],!;
-%   NPos is Pos-1,
-%   shiftLeft(NPos, T, NewTape), Res=[S|NewTape].
 
 takeAction(Tape, Pos, [_, _, Ns, Ac], NTape, NPos, Ns) :-
   Ac == 'R', NTape=Tape, NPos is Pos+1, !;
@@ -76,35 +70,24 @@ takeAction(Tape, Pos, [_, _, Ns, Ac], NTape, NPos, Ns) :-
 
 getSymbol([], _, _).
 getSymbol([H|T], Pos, Res) :-
-  Pos == 0, Res=H,!;
+  Pos == 1, Res=H,!;
   NPos is Pos-1,
   getSymbol(T, NPos, Res).
 
 
 makeTransitions(State, Tape, Pos , Res) :-
-  write("Pos "), writeln(Pos),
-  Pos > 5, halt;
   insertStateToTape(State, Tape, Pos, Cfg),
   getSymbol(Tape, Pos, Sy),
-  write("NewSymbol "), writeln(Sy),
   getRule(State, Sy, Rule),
-  writeln(Rule),
   takeAction(Tape, Pos, Rule, NTape, NPos, NState),
-  write("NewTape "), writeln(NTape),
-  write("NPos "), writeln(NPos),
-  write("NState "), writeln(NState),
   (
-  NState == 'F', Res=[Cfg], writeln("End"), !;
+  NState == 'F', Res=[Cfg], !;
   makeTransitions(NState, NTape, NPos , Cfgs), Res=[Cfg|Cfgs]
   ).
 
 % find a rule for current state and tape symbol
 getRule(State, Symbol, Rule) :-
-  % write("Checking Rule State:"), writeln(State),
-  % write("Checking Rule Symbol:"), writeln(Symbol),
   rule([State,Symbol,Next,Ta]),
-  % write("Got Next State:"), writeln(Next),
-  % write("Got Action:"), writeln(Ta),
   Rule = [State,Symbol,Next,Ta].
 
 
