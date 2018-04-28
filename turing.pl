@@ -28,6 +28,7 @@ main(Argv) :-
   printResults(Result),
   halt.
 
+
 printResult([]).
 printResult([H|T]) :-
   H == '<', printResult(T), !;
@@ -41,6 +42,7 @@ printResults([H|T]) :-
   printResult(H),
   writeln(""),
   printResults(T).
+
 
 addTapeBound([H|_], NTape) :-
   append(['<'],H,X),
@@ -62,6 +64,7 @@ writeToPos(Symbol, Pos, [S|T], Res) :-
   writeToPos(Symbol, NPos, T, NewTape), Res=[S|NewTape].
 
 
+% Make actual action on Tape
 takeAction(Tape, Pos, [_, _, Ns, Ac], NTape, NPos, Ns) :-
   Ac == 'R', NTape=Tape, NPos is Pos+1, !;
   Ac == 'L', NTape=Tape, NPos is Pos-1, !;
@@ -76,13 +79,15 @@ getSymbol([H|T], Pos, Res) :-
 
 
 makeTransitions(State, Tape, Pos , Res) :-
-  insertStateToTape(State, Tape, Pos, Cfg),
-  getSymbol(Tape, Pos, Sy),
-  getRule(State, Sy, Rule),
+  insertStateToTape(State, Tape, Pos, Cfg), % Generate configuration
+  getSymbol(Tape, Pos, Sy),                 % getSymbol under head
+  getRule(State, Sy, Rule),                 % getRule for symbol in current state
   takeAction(Tape, Pos, Rule, NTape, NPos, NState),
   (
-  NState == 'F', Res=[Cfg], !;
-  makeTransitions(NState, NTape, NPos , Cfgs), Res=[Cfg|Cfgs]
+  NPos == 1, Res=[Cfg], !;                  % abnormal stop
+  NState == 'F', Res=[Cfg], !;              % reached the end state
+  makeTransitions(NState, NTape, NPos , Cfgs),
+  Res=[Cfg|Cfgs]
   ).
 
 % find a rule for current state and tape symbol
