@@ -32,7 +32,7 @@ main(Argv) :-
 printResult([]).
 printResult([H|T]) :-
   H == '<', printResult(T), !;
-  T == ['>'], !;
+  T == ['>'], writeln(H), !;
   write(H),
   printResult(T).
 
@@ -40,7 +40,6 @@ printResult([H|T]) :-
 printResults([]).
 printResults([H|T]) :-
   printResult(H),
-  writeln(""),
   printResults(T).
 
 
