@@ -6,4 +6,4 @@ all:
 clean:
 	rm -rf flp18-log *.zip
 zip:
-	zip -r flp-log-xkrajn02.zip turing.pl Makefile
+	zip -r flp-log-xkrajn02.zip turing.pl Makefile 1.txt 2.txt README
